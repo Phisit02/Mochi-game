@@ -4,27 +4,24 @@ const racersData = [
     { id: 'racer2', name: "นักวิ่งฟ้า", color: '#3498db' },
     { id: 'racer3', name: "นักวิ่งเขียว", color: '#2ecc71' },
     { id: 'racer4', name: "นักวิ่งเหลือง", color: '#f1c40f' },
-    { id: 'racer5', name: "นักวิ่งม่วง", color: '#9b59b6' } // แก้ไข quote ที่ชื่อนักวิ่งม่วงแล้ว
+    { id: 'racer5', name: "นักวิ่งม่วง", color: '#9b59b6' }
 ];
 
-let racers = []; // จะถูก populate ใน initializeRacers
+let racers = [];
 
 const startButton = document.getElementById('startButton');
 const statusDisplay = document.getElementById('status');
 const track = document.getElementById('track');
 const finishLineElement = document.getElementById('finishLine');
 
-// Player Name Modal Elements
 const playerNameModal = document.getElementById('playerNameModal');
 const playerNameInput = document.getElementById('playerNameInput');
 const submitPlayerNameButton = document.getElementById('submitPlayerName');
 const currentPlayerNameDisplay = document.getElementById('currentPlayerNameDisplay');
 
-// Betting System Elements
 const playerGoldDisplay = document.getElementById('playerGold');
 const betSelection = document.getElementById('betSelection');
 
-// Podium Elements
 const podiumArea = document.getElementById('podium-area');
 const podiumStands = {
     1: podiumArea.querySelector('#pos1 .runner-name-podium'),
@@ -32,41 +29,72 @@ const podiumStands = {
     3: podiumArea.querySelector('#pos3 .runner-name-podium')
 };
 
-// Player Record Table Elements
 const recordsArea = document.getElementById('records-area');
 const playerRecordsTableBody = document.getElementById('playerRecordsTableBody');
+
+const leaderboardArea = document.getElementById('localLeaderboardArea');
+const leaderboardTableBody = document.getElementById('leaderboardTableBody');
 
 let raceInterval;
 let gameInProgress = false;
 let nextRank = 1;
 
-// Game State
-let currentPlayerName = "ผู้เล่น";
-let playerGold = 5000;
+const INITIAL_GOLD = 5000;
 const BET_AMOUNT = 500;
 const WIN_REWARD = 1000;
 
-// Player records (for current session)
-let playerStats = {
+let currentPlayerName = "ผู้เล่น";
+let currentPlayerStats = {
     name: "ผู้เล่น",
     wins: 0,
     totalBets: 0,
-    gold: 5000
+    gold: INITIAL_GOLD,
+    winPercentage: 0.0
 };
 
-// MOJI กำลังคิดว่า: ต้องมีฟังก์ชันสำหรับจัดการชื่อผู้เล่น
+// --- MOJI: ส่วนสำหรับ Firebase ---
+// **สำคัญมาก:** แทนที่ "YOUR_..." ด้วย Firebase Config จริงจาก Console ของคุณ!
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY", // << 🔥 คุณพิสิษฐ์: ไปเอาค่านี้จาก Firebase Console 🔥
+  authDomain: "phisitgame-2aa1b.firebaseapp.com", // << 🔥 คุณพิสิษฐ์: ตรวจสอบค่านี้จาก Firebase Console 🔥 (ส่วนใหญ่มักจะเป็น projectId.firebaseapp.com)
+  databaseURL: "https://phisitgame-2aa1b-default-rtdb.asia-southeast1.firebasedatabase.app/", // << MOJI ใส่ให้แล้วค่ะ
+  projectId: "phisitgame-2aa1b", // << ชื่อนี้น่าจะถูกต้องแล้ว (ถ้าตรงกับ Project ID ใน Console)
+  storageBucket: "phisitgame-2aa1b.appspot.com", // << 🔥 คุณพิสิษฐ์: ตรวจสอบค่านี้จาก Firebase Console 🔥 (ส่วนใหญ่มักจะเป็น projectId.appspot.com)
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // << 🔥 คุณพิสิษฐ์: ไปเอาค่านี้จาก Firebase Console 🔥
+  appId: "YOUR_APP_ID" // << 🔥 คุณพิสิษฐ์: ไปเอาค่านี้จาก Firebase Console 🔥
+};
+
+// Initialize Firebase (คุณพิสิษฐ์: เอา comment ส่วนนี้ออกเมื่อใส่ Config ทั้งหมดถูกต้อง และเพิ่ม SDK ใน HTML แล้ว)
+/*
+if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    try {
+        firebase.initializeApp(firebaseConfig);
+        window.database = firebase.database(); // ทำให้ database เข้าถึงได้จาก global scope
+        console.log("Firebase Initialized Successfully!");
+    } catch (e) {
+        console.error("Error initializing Firebase: ", e);
+        window.database = null;
+    }
+} else {
+    console.warn("Firebase SDK not loaded or firebaseConfig is placeholder/incomplete. Firebase features will be unavailable.");
+    window.database = null;
+}
+*/
+// --- สิ้นสุดส่วน Firebase ---
+
+
 function setupPlayerNameModal() {
     playerNameModal.style.display = 'flex';
     startButton.disabled = true;
     betSelection.disabled = true;
     recordsArea.style.display = 'none';
+    if (leaderboardArea) leaderboardArea.style.display = 'none';
 
     submitPlayerNameButton.addEventListener('click', () => {
         const name = playerNameInput.value.trim();
         if (name) {
             currentPlayerName = name;
-            playerStats.name = currentPlayerName;
-            // playerStats.gold = playerGold; // ตั้งทองเริ่มต้นในสถิติ (ย้ายไปทำตอน initializeGameUI หรือเมื่อเริ่มเกมครั้งแรก)
+            loadPlayerStatsFromLocalStorage(currentPlayerName);
             playerNameModal.style.display = 'none';
             initializeGameUI();
         } else {
@@ -89,87 +117,128 @@ function initializeRacers() {
 function initializeGameUI() {
     currentPlayerNameDisplay.textContent = currentPlayerName;
     statusDisplay.innerHTML = `สวัสดีค่ะ <b>${currentPlayerName}</b>! <br>เลือกนักวิ่งที่คิดว่าจะชนะ แล้วคลิก "เริ่มแข่ง!"`;
-    
-    // ตั้งค่าทองและสถิติเริ่มต้นสำหรับผู้เล่นใหม่ (ถ้ายังไม่มี)
-    // หรือโหลดจาก localStorage หากมีการ implement
-    playerStats.gold = playerGold; // ใช้ playerGold ปัจจุบัน (อาจจะมาจาก default หรือ localStorage)
-    playerGoldDisplay.textContent = playerStats.gold;
+    playerGoldDisplay.textContent = currentPlayerStats.gold;
 
-
-    startButton.disabled = false; // <--- จุดสำคัญ: เปิดการใช้งานปุ่ม
-    betSelection.disabled = false; // <--- จุดสำคัญ: เปิดการใช้งานตัวเลือก
+    startButton.disabled = false;
+    betSelection.disabled = false;
     recordsArea.style.display = 'block';
-    updatePlayerRecordDisplay();
+    if (leaderboardArea) leaderboardArea.style.display = 'block';
+
+    updateCurrentPlayerRecordDisplay();
+
+    // --- MOJI: เลือกแสดง Leaderboard ---
+    // คุณพิสิษฐ์: ถ้าต้องการให้ Firebase เป็น default และ Firebase พร้อมแล้ว ให้เรียก displayFirebaseLeaderboard()
+    // if (window.database) {
+    //    displayFirebaseLeaderboard();
+    // } else {
+       displayLocalLeaderboard(); // Fallback to local or default to local
+    // }
 }
 
-function updateBettingDisplay() {
-    playerGoldDisplay.textContent = playerStats.gold; // อัปเดตจาก playerStats
+function loadPlayerStatsFromLocalStorage(playerName) {
+    const storedStats = localStorage.getItem('playerStats_' + playerName);
+    if (storedStats) {
+        currentPlayerStats = JSON.parse(storedStats);
+        if (typeof currentPlayerStats.gold === 'undefined') {
+            currentPlayerStats.gold = INITIAL_GOLD;
+        }
+        if (typeof currentPlayerStats.winPercentage === 'undefined') {
+            currentPlayerStats.winPercentage = currentPlayerStats.totalBets > 0 ? parseFloat(((currentPlayerStats.wins / currentPlayerStats.totalBets) * 100).toFixed(1)) : 0.0;
+        }
+    } else {
+        currentPlayerStats = { name: playerName, wins: 0, totalBets: 0, gold: INITIAL_GOLD, winPercentage: 0.0 };
+    }
 }
 
-function updatePlayerRecordDisplay() {
+function savePlayerStatsToLocalStorage() {
+    currentPlayerStats.winPercentage = currentPlayerStats.totalBets > 0 ? parseFloat(((currentPlayerStats.wins / currentPlayerStats.totalBets) * 100).toFixed(1)) : 0.0;
+    localStorage.setItem('playerStats_' + currentPlayerName, JSON.stringify(currentPlayerStats));
+}
+
+function updateCurrentPlayerRecordDisplay() {
     if (!playerRecordsTableBody) return;
     playerRecordsTableBody.innerHTML = '';
-
     const row = playerRecordsTableBody.insertRow();
-    const winPercentage = playerStats.totalBets > 0 ? ((playerStats.wins / playerStats.totalBets) * 100).toFixed(1) : "0.0";
-    const losses = playerStats.totalBets - playerStats.wins;
-
-    row.insertCell().textContent = playerStats.name;
-    row.insertCell().textContent = playerStats.wins;
+    const losses = currentPlayerStats.totalBets - currentPlayerStats.wins;
+    row.insertCell().textContent = currentPlayerStats.name;
+    row.insertCell().textContent = currentPlayerStats.wins;
     row.insertCell().textContent = losses;
-    row.insertCell().textContent = playerStats.totalBets;
-    row.insertCell().textContent = `${winPercentage}%`;
-    row.insertCell().textContent = playerStats.gold;
+    row.insertCell().textContent = currentPlayerStats.totalBets;
+    row.insertCell().textContent = `${currentPlayerStats.winPercentage.toFixed(1)}%`;
+    row.insertCell().textContent = currentPlayerStats.gold;
+}
+
+function displayLocalLeaderboard() {
+    if (!leaderboardTableBody) return;
+    leaderboardTableBody.innerHTML = '';
+    let allLocalStats = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('playerStats_')) {
+            const stats = JSON.parse(localStorage.getItem(key));
+            if (typeof stats.winPercentage === 'undefined') {
+                 stats.winPercentage = stats.totalBets > 0 ? parseFloat(((stats.wins / stats.totalBets) * 100).toFixed(1)) : 0.0;
+            }
+            if (typeof stats.gold === 'undefined') {
+                stats.gold = INITIAL_GOLD;
+            }
+            allLocalStats.push(stats);
+        }
+    }
+    allLocalStats.sort((a, b) => {
+        if (b.winPercentage !== a.winPercentage) return b.winPercentage - a.winPercentage;
+        if (b.wins !== a.wins) return b.wins - a.wins;
+        return a.totalBets - b.totalBets;
+    });
+    allLocalStats.slice(0, 10).forEach((stats, index) => {
+        const row = leaderboardTableBody.insertRow();
+        const losses = stats.totalBets - stats.wins;
+        row.insertCell().textContent = `${index + 1}`;
+        row.insertCell().textContent = stats.name;
+        row.insertCell().textContent = stats.wins;
+        row.insertCell().textContent = losses;
+        row.insertCell().textContent = stats.totalBets;
+        row.insertCell().textContent = `${parseFloat(stats.winPercentage).toFixed(1)}%`;
+        row.insertCell().textContent = stats.gold;
+    });
 }
 
 function startGame() {
     if (gameInProgress) return;
-
-    if (playerStats.gold < BET_AMOUNT) {
+    if (currentPlayerStats.gold < BET_AMOUNT) {
         statusDisplay.textContent = "ทองไม่พอสำหรับเดิมพันค่ะ!";
         return;
     }
-
-    playerStats.gold -= BET_AMOUNT;
-    playerStats.totalBets++;
-    updateBettingDisplay();
-    updatePlayerRecordDisplay();
-
+    currentPlayerStats.gold -= BET_AMOUNT;
+    currentPlayerStats.totalBets++;
+    playerGoldDisplay.textContent = currentPlayerStats.gold;
+    updateCurrentPlayerRecordDisplay();
     const playerBetOnRacerId = racers[parseInt(betSelection.value) - 1].id;
-
     gameInProgress = true;
     nextRank = 1;
     podiumArea.style.display = 'none';
     statusDisplay.textContent = "กำลังแข่ง... ลุ้นๆ!";
     startButton.disabled = true;
     betSelection.disabled = true;
-
     racers.forEach(racer => {
         racer.element.style.left = '15px';
         racer.position = 15;
         racer.finished = false;
         racer.rank = 0;
     });
-
     raceInterval = setInterval(() => {
         let finishersCount = 0;
-
         racers.forEach(racer => {
-            if (!racer.finished) {
-                moveRacer(racer);
-            }
+            if (!racer.finished) moveRacer(racer);
             if(racer.finished) finishersCount++;
         });
-
-        checkFinishersAndProcess(); // ไม่ต้องส่ง playerBetOnRacerId ไปแล้ว เพราะเช็คตอนจบ
-
+        checkFinishersAndProcess();
         const winner = racers.find(r => r.rank === 1);
         if (winner && (finishersCount >= 3 || finishersCount === racers.length)) {
              endRaceProcedure(playerBetOnRacerId, `${winner.name} ชนะแล้ว!`);
         } else if (finishersCount === racers.length && !winner) {
             endRaceProcedure(playerBetOnRacerId, "การแข่งขันสิ้นสุดแล้ว!");
         }
-
     }, 100);
 }
 
@@ -182,14 +251,10 @@ function moveRacer(racer) {
 
 function checkFinishersAndProcess() {
     const finishLineTriggerPoint = finishLineElement.offsetLeft;
-
     racers.forEach(racer => {
         if (!racer.finished && (racer.element.offsetLeft + racer.element.offsetWidth) >= finishLineTriggerPoint) {
             racer.finished = true;
             racer.rank = nextRank++;
-            if (racer.rank === 1) {
-                console.log(`${racer.name} เข้าเส้นชัยเป็นอันดับ 1!`);
-            }
         }
     });
 }
@@ -197,49 +262,116 @@ function checkFinishersAndProcess() {
 function endRaceProcedure(playerBetOnRacerId, raceEndMessage) {
     clearInterval(raceInterval);
     gameInProgress = false;
-
     const winner = racers.find(r => r.rank === 1);
     let finalMessage = raceEndMessage;
-
     if (winner) {
         if (winner.id === playerBetOnRacerId) {
             finalMessage += ` คุณ <b>${currentPlayerName}</b> ทายถูก! ได้รับ ${WIN_REWARD} ทอง!`;
-            playerStats.gold += WIN_REWARD;
-            playerStats.wins++;
+            currentPlayerStats.gold += WIN_REWARD;
+            currentPlayerStats.wins++;
         } else {
             finalMessage += ` คุณ <b>${currentPlayerName}</b> ทายผิด (ทาย ${racers.find(r=>r.id === playerBetOnRacerId).name}) ไม่ได้รับทองเพิ่มค่ะ`;
         }
     } else {
         finalMessage += " ไม่พบผู้ชนะที่ชัดเจนในการเดิมพันรอบนี้ค่ะ";
     }
-    // playerStats.gold ได้ถูกอัปเดตไปแล้วในเงื่อนไขข้างบน
+    savePlayerStatsToLocalStorage();
+    // --- MOJI: ถ้าใช้ Firebase และ Firebase พร้อมแล้ว ให้เรียกฟังก์ชันบันทึก ---
+    // if (window.database) savePlayerStatsToFirebase(currentPlayerStats);
 
     statusDisplay.innerHTML = finalMessage;
-    updateBettingDisplay();
-    updatePlayerRecordDisplay();
+    playerGoldDisplay.textContent = currentPlayerStats.gold;
+    updateCurrentPlayerRecordDisplay();
+
+    // --- MOJI: เลือกแสดง Leaderboard ---
+    // if (window.database) {
+    //    displayFirebaseLeaderboard();
+    // } else {
+       displayLocalLeaderboard();
+    // }
 
     startButton.disabled = false;
     betSelection.disabled = false;
     startButton.textContent = "แข่งอีกครั้ง!";
-
     displayPodium();
 }
+
+// --- MOJI: ฟังก์ชันตัวอย่างสำหรับ Firebase (คุณพิสิษฐ์: เอา comment ออกและปรับปรุงเมื่อพร้อม) ---
+/*
+function savePlayerStatsToFirebase(statsToSave) {
+  if (window.database) {
+    const safePlayerName = statsToSave.name.replace(/[.#$[\]]/g, '_');
+    const playerRef = window.database.ref('leaderboard/' + safePlayerName);
+    playerRef.set({
+      name: statsToSave.name,
+      wins: statsToSave.wins,
+      totalBets: statsToSave.totalBets,
+      gold: statsToSave.gold,
+      winPercentage: statsToSave.winPercentage,
+      lastPlayed: firebase.database.ServerValue.TIMESTAMP
+    }).then(() => {
+      console.log("สถิติบันทึกไป Firebase สำหรับ " + statsToSave.name);
+    }).catch((error) => {
+      console.error("เกิดข้อผิดพลาดในการบันทึกสถิติไป Firebase: ", error);
+    });
+  } else {
+    console.warn("Firebase Database is not initialized. Cannot save stats to Firebase.");
+  }
+}
+
+function displayFirebaseLeaderboard() {
+  if (window.database && leaderboardTableBody) {
+    const leaderboardRef = window.database.ref('leaderboard').orderByChild('winPercentage').limitToLast(10);
+    leaderboardRef.on('value', (snapshot) => {
+      leaderboardTableBody.innerHTML = '';
+      const leaderboardData = [];
+      snapshot.forEach((childSnapshot) => {
+        leaderboardData.push(childSnapshot.val());
+      });
+      leaderboardData.reverse();
+      leaderboardData.sort((a,b) => {
+          if (b.winPercentage !== a.winPercentage) return b.winPercentage - a.winPercentage;
+          if (b.wins !== a.wins) return b.wins - a.wins;
+          return a.totalBets - b.totalBets;
+      });
+      leaderboardData.forEach((stats, index) => {
+          const row = leaderboardTableBody.insertRow();
+          const losses = stats.totalBets - stats.wins;
+          row.insertCell().textContent = `${index + 1}`;
+          row.insertCell().textContent = stats.name;
+          row.insertCell().textContent = stats.wins;
+          row.insertCell().textContent = losses;
+          row.insertCell().textContent = stats.totalBets;
+          row.insertCell().textContent = `${parseFloat(stats.winPercentage).toFixed(1)}%`;
+          row.insertCell().textContent = stats.gold;
+      });
+    }, (error) => {
+        console.error("Error fetching Firebase leaderboard: ", error);
+        leaderboardTableBody.innerHTML = '<tr><td colspan="7">ไม่สามารถโหลดตารางอันดับจากเซิร์ฟเวอร์ได้</td></tr>';
+        // Fallback to local leaderboard if Firebase fetch fails
+        // displayLocalLeaderboard();
+    });
+  } else {
+    console.warn("Firebase Database is not initialized or leaderboard table body not found. Displaying local leaderboard.");
+    displayLocalLeaderboard(); // Fallback
+  }
+}
+*/
+// --- สิ้นสุดส่วน Firebase ---
 
 function displayPodium() {
     podiumArea.style.display = 'block';
     const rankedRacers = [...racers].sort((a, b) => {
         if (a.rank === 0 && b.rank > 0) return 1;
         if (b.rank === 0 && a.rank > 0) return -1;
-        if (a.rank === 0 && b.rank === 0) return 0; // ทั้งคู่ไม่จบ ให้เรียงตามตำแหน่งปัจจุบันก็ได้ถ้าต้องการ
-        if (a.rank === 0) return 1; // a ไม่จบ b จบ
-        if (b.rank === 0) return -1; // b ไม่จบ a จบ
+        if (a.rank === 0 && b.rank === 0) return 0;
+        if (a.rank === 0) return 1;
+        if (b.rank === 0) return -1;
         return a.rank - b.rank;
     });
-
     for (let i = 1; i <= 3; i++) {
         if (podiumStands[i]) podiumStands[i].textContent = '-';
     }
-
     for (let i = 0; i < Math.min(rankedRacers.length, 3); i++) {
         const racer = rankedRacers[i];
         if (racer.rank > 0 && racer.rank <= 3) {
@@ -252,23 +384,37 @@ function displayPodium() {
 
 window.onload = () => {
     initializeRacers();
-    setupPlayerNameModal(); // เรียกเพื่อให้ modal แสดงขึ้น และตั้งค่า initial disable ให้ปุ่ม
-    
-    // Populate betSelection dropdown
-    betSelection.innerHTML = ''; // Clear existing options
+    setupPlayerNameModal();
+    betSelection.innerHTML = '';
     racersData.forEach((racer, index) => {
         const option = document.createElement('option');
-        option.value = index + 1; // Value should be 1-based index for selection
+        option.value = index + 1;
         option.textContent = `นักวิ่ง ${index + 1} (${racer.name})`;
         betSelection.appendChild(option);
     });
-    betSelection.value = "1"; // Set default selection
-
-    // การตั้งค่าชื่อนักวิ่งบนตัวนักวิ่งเอง ควรทำหลังจาก initializeRacers
-    racers.forEach(racerInstance => { // ใช้ racers ที่เป็น instance ของ DOM elements
+    betSelection.value = "1";
+    racers.forEach(racerInstance => {
         racerInstance.element.querySelector('.runner-name').textContent = racerInstance.name;
         racerInstance.element.querySelector('.runner-number').textContent = racerInstance.id.replace('racer','');
     });
+
+    // --- MOJI: Initialize Firebase (คุณพิสิษฐ์: เอา comment ส่วนนี้ออกเมื่อใส่ Config ทั้งหมดถูกต้อง) ---
+    /*
+    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.databaseURL !== "YOUR_DATABASE_URL") {
+        try {
+            firebase.initializeApp(firebaseConfig);
+            window.database = firebase.database();
+            console.log("Firebase Initialized Successfully!");
+        } catch (e) {
+            console.error("Error initializing Firebase: ", e);
+            window.database = null;
+        }
+    } else {
+        console.warn("Firebase SDK not loaded or firebaseConfig is placeholder/incomplete. Firebase features will be unavailable.");
+        window.database = null;
+    }
+    */
+    // --- สิ้นสุดการ Initialize Firebase ---
 };
 
 startButton.addEventListener('click', startGame);

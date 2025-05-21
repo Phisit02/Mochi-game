@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เกมวิ่งแข่งมหาสนุก MOJI V.3</title>
+    <title>เกมวิ่งแข่ง MOJI (Firebase Ready)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -40,12 +40,7 @@
             <div id="betting-options">
                 <label for="betSelection">เลือกนักวิ่งที่จะชนะ (เดิมพัน 500 ทอง):</label>
                 <select id="betSelection">
-                    <option value="1">นักวิ่ง 1 (แดง)</option>
-                    <option value="2">นักวิ่ง 2 (ฟ้า)</option>
-                    <option value="3">นักวิ่ง 3 (เขียว)</option>
-                    <option value="4">นักวิ่ง 4 (เหลือง)</option>
-                    <option value="5">นักวิ่ง 5 (ม่วง)</option>
-                </select>
+                    </select>
             </div>
         </div>
 
@@ -53,7 +48,7 @@
         <p id="status">กรุณาใส่ชื่อเพื่อเริ่มเกม...</p>
 
         <div id="podium-area" style="display: none;">
-            <h2>อันดับผู้ชนะ</h2>
+            <h2>อันดับผู้ชนะรอบล่าสุด</h2>
             <div class="podium">
                 <div class="podium-stand" id="pos2">
                     <div class="medal">🥈</div>
@@ -75,7 +70,7 @@
     </div>
 
     <div id="records-area" class="game-container" style="margin-top: 30px; display: none;">
-        <h2>สถิติผู้เล่น</h2>
+        <h2>สถิติผู้เล่นปัจจุบัน (จากเครื่องนี้)</h2>
         <table id="playerRecordsTable">
             <thead>
                 <tr>
@@ -89,6 +84,22 @@
             </thead>
             <tbody id="playerRecordsTableBody">
                 </tbody>
+        </table>
+    </div>
+
+    <div id="localLeaderboardArea" class="game-container" style="margin-top: 30px; display: none;">
+        <h2>ตารางอันดับ (จากเครื่องนี้ / Firebase)</h2> <table id="leaderboardTable"> <thead>
+                <tr>
+                    <th>อันดับ</th>
+                    <th>ชื่อผู้เล่น</th>
+                    <th>ทายถูก</th>
+                    <th>ทายผิด</th>
+                    <th>รวมทาย</th>
+                    <th>% ชนะ</th>
+                    <th>ทองคงเหลือ</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboardTableBody"> </tbody>
         </table>
     </div>
 
