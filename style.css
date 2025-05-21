@@ -1,0 +1,345 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    background-color: #e0f2f7; /* สีฟ้าอ่อนๆ เหมือนท้องฟ้า */
+    color: #333;
+    margin: 0;
+    padding: 20px 0; /* ลด padding ด้านข้าง เพิ่มด้านบนล่าง */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.game-container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    width: 95%;
+    max-width: 900px;
+    margin-bottom: 20px; /* เพิ่มระยะห่างระหว่าง game-container กับ records-area */
+}
+
+h1 {
+    color: #2c7a00; /* สีเขียวเข้ม */
+    margin-bottom: 10px;
+}
+
+/* Player Name Modal Styles */
+.modal {
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    position: fixed; 
+    z-index: 100; 
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.7); 
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 30px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-content h2 {
+    color: #4CAF50;
+    margin-top: 0;
+}
+
+.modal-content label {
+    display: block;
+    margin: 15px 0 5px 0;
+    font-weight: bold;
+}
+
+.modal-content input[type="text"] {
+    width: calc(100% - 22px);
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.modal-content button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.modal-content button:hover {
+    background-color: #45a049;
+}
+
+/* Spectators Area */
+.spectators {
+    background-image: url('https://images.pexels.com/photos/1614054/pexels-photo-1614054.jpeg');
+    background-size: cover;
+    background-position: center bottom; /* เน้นส่วนล่างของภาพที่มีคน */
+    background-repeat: no-repeat;
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+    margin: 10px auto 0 auto;
+    width: 100%; /* ปรับให้เต็มความกว้างของ game-container */
+    min-height: 120px; /* ความสูงขั้นต่ำ */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.spectator-text {
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    background-color: rgba(0,0,0,0.3); /* เพิ่มพื้นหลังจางๆ ให้ข้อความอ่านง่าย */
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+
+#track-area {
+    background: #f0e6d2; /* สีพื้นสนามรอบๆ ลู่วิ่ง */
+    padding-bottom: 10px; /* ลด padding */
+    border-radius: 0 0 10px 10px;
+    margin: 0 auto 20px auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#track {
+    width: 100%;
+    height: 300px;
+    background-color: #d2b48c; 
+    background-image:
+        repeating-linear-gradient(to right, transparent, transparent 49.5%, #fff 49.5%, #fff 50.5%),
+        repeating-linear-gradient(to bottom, #d2b48c, #d2b48c 19%, #e0e0e0 19%, #e0e0e0 20%);
+    background-size: 20% 100%, 100% 60px; 
+    border: 5px solid #8B4513; 
+    position: relative;
+    border-radius: 0 0 10px 10px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    overflow: hidden; /* ป้องกันนักวิ่งล้นออกมา */
+}
+
+.racer {
+    width: 60px; 
+    height: 45px;
+    color: white;
+    text-align: center;
+    line-height: 1.2;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.3);
+    position: absolute; 
+    left: 15px;
+    transition: left 0.1s linear;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    box-sizing: border-box;
+}
+.runner-number {
+    font-size: 14px;
+    font-weight: bold;
+    display: block;
+}
+.runner-name {
+    font-size: 10px;
+}
+
+#racer1 { top: 20px; background-color: #e74c3c; } 
+#racer2 { top: 80px; background-color: #3498db; } 
+#racer3 { top: 140px; background-color: #2ecc71; } 
+#racer4 { top: 200px; background-color: #f1c40f; } 
+#racer5 { top: 260px; background-color: #9b59b6; } 
+
+
+#finishLine {
+    position: absolute;
+    right: 20px; /* ปรับให้เข้ามาในสนามมากขึ้น */
+    top: 0;
+    bottom: 0;
+    width: 15px;
+    background-image: repeating-linear-gradient(
+        45deg,
+        #000,
+        #000 10px,
+        #fff 10px,
+        #fff 20px
+    );
+    border-left: 3px solid #333;
+}
+
+#betting-area {
+    background-color: #fff9e6; 
+    padding: 15px;
+    border-radius: 10px;
+    margin: 20px auto;
+    width: 90%; /* ปรับความกว้าง */
+    max-width: 700px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+#betting-area h2 {
+    margin-top: 0;
+    color: #d98303;
+}
+#betting-area p {
+    margin: 10px 0;
+}
+#betting-options {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#betting-options label {
+    margin-bottom: 8px;
+}
+#betSelection {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    min-width: 200px;
+}
+
+button#startButton {
+    background-color: #5cb85c; 
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    margin-top: 10px;
+    transition: background-color 0.3s, transform 0.1s;
+    box-shadow: 0 4px #4cae4c;
+}
+button#startButton:hover {
+    background-color: #4cae4c;
+}
+button#startButton:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px #4cae4c;
+}
+button#startButton:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    box-shadow: 0 4px #bbb;
+}
+
+#status {
+    margin-top: 15px;
+    font-size: 16px; /* ปรับขนาดให้เหมาะสม */
+    font-weight: normal;
+    color: #555;
+    min-height: 40px; /* เพิ่มความสูงเผื่อข้อความหลายบรรทัด */
+    line-height: 1.4;
+}
+
+#podium-area {
+    margin-top: 30px;
+    background-color: #fafafa;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 200px; 
+    gap: 5px;
+}
+.podium-stand {
+    background-color: #b0bec5; 
+    width: 100px;
+    border: 2px solid #78909c;
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; 
+    align-items: center;
+    padding-bottom: 10px;
+    box-shadow: inset 0 5px 10px rgba(0,0,0,0.1);
+    text-align: center;
+    box-sizing: border-box;
+}
+#pos1 { height: 180px; background-color: #ffd700; border-color: #e0b800;} 
+#pos2 { height: 140px; background-color: #c0c0c0; border-color: #a0a0a0;} 
+#pos3 { height: 100px; background-color: #cd7f32; border-color: #a05c20;} 
+
+.medal {
+    font-size: 30px;
+    margin-bottom: 5px;
+}
+.runner-name-podium {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 5px;
+    word-break: break-word; /* ถ้าชื่อยาวมาก */
+}
+.rank-label {
+    font-size: 12px;
+    color: #555;
+}
+
+/* Records Table Styles */
+#records-area {
+    background-color: #e6f7ff;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#records-area h2 {
+    color: #005c99; 
+    margin-top: 0;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+#playerRecordsTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#playerRecordsTable th, #playerRecordsTable td {
+    border: 1px solid #b3daff; 
+    padding: 8px; /* ปรับ padding */
+    text-align: center; /* จัดกลาง */
+    font-size: 14px; /* ปรับขนาดอักษร */
+}
+
+#playerRecordsTable th {
+    background-color: #cceeff; 
+    color: #004c80;
+    font-weight: bold;
+}
+
+#playerRecordsTable tbody tr:nth-child(even) {
+    background-color: #f2f9ff; 
+}
+
+#playerRecordsTable tbody tr:hover {
+    background-color: #e6f2ff; 
+}

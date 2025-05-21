@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมวิ่งแข่งมหาสนุก MOJI V.3</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="playerNameModal" class="modal">
+        <div class="modal-content">
+            <h2>ยินดีต้อนรับสู่เกมวิ่งแข่ง!</h2>
+            <label for="playerNameInput">กรุณาใส่ชื่อผู้เล่น:</label>
+            <input type="text" id="playerNameInput" placeholder="ชื่อของคุณ" maxlength="20">
+            <button id="submitPlayerName">เริ่มเล่นเกม!</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <h1>เกมวิ่งแข่งมหาสนุก!</h1>
+
+        <div class="spectators">
+            <div class="spectator-text">กองเชียร์กำลังลุ้น!</div>
+        </div>
+
+        <div id="track-area">
+            <div id="track">
+                <div id="racer1" class="racer"><span class="runner-number">1</span><span class="runner-name">นักวิ่งแดง</span></div>
+                <div id="racer2" class="racer"><span class="runner-number">2</span><span class="runner-name">นักวิ่งฟ้า</span></div>
+                <div id="racer3" class="racer"><span class="runner-number">3</span><span class="runner-name">นักวิ่งเขียว</span></div>
+                <div id="racer4" class="racer"><span class="runner-number">4</span><span class="runner-name">นักวิ่งเหลือง</span></div>
+                <div id="racer5" class="racer"><span class="runner-number">5</span><span class="runner-name">นักวิ่งม่วง</span></div>
+                <div id="finishLine">เส้นชัย</div>
+            </div>
+        </div>
+
+        <div id="betting-area">
+            <h2>ทายผลการแข่งขัน!</h2>
+            <p>ผู้เล่น: <b id="currentPlayerNameDisplay">ผู้เล่น</b> | เงินของคุณ: <span id="playerGold">5000</span> ทอง</p>
+            <div id="betting-options">
+                <label for="betSelection">เลือกนักวิ่งที่จะชนะ (เดิมพัน 500 ทอง):</label>
+                <select id="betSelection">
+                    <option value="1">นักวิ่ง 1 (แดง)</option>
+                    <option value="2">นักวิ่ง 2 (ฟ้า)</option>
+                    <option value="3">นักวิ่ง 3 (เขียว)</option>
+                    <option value="4">นักวิ่ง 4 (เหลือง)</option>
+                    <option value="5">นักวิ่ง 5 (ม่วง)</option>
+                </select>
+            </div>
+        </div>
+
+        <button id="startButton">เริ่มแข่ง!</button>
+        <p id="status">กรุณาใส่ชื่อเพื่อเริ่มเกม...</p>
+
+        <div id="podium-area" style="display: none;">
+            <h2>อันดับผู้ชนะ</h2>
+            <div class="podium">
+                <div class="podium-stand" id="pos2">
+                    <div class="medal">🥈</div>
+                    <div class="runner-name-podium"></div>
+                    <div class="rank-label">อันดับ 2</div>
+                </div>
+                <div class="podium-stand" id="pos1">
+                    <div class="medal">🥇</div>
+                    <div class="runner-name-podium"></div>
+                    <div class="rank-label">อันดับ 1</div>
+                </div>
+                <div class="podium-stand" id="pos3">
+                    <div class="medal">🥉</div>
+                    <div class="runner-name-podium"></div>
+                    <div class="rank-label">อันดับ 3</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="records-area" class="game-container" style="margin-top: 30px; display: none;">
+        <h2>สถิติผู้เล่น</h2>
+        <table id="playerRecordsTable">
+            <thead>
+                <tr>
+                    <th>ชื่อผู้เล่น</th>
+                    <th>ทายถูก</th>
+                    <th>ทายผิด</th>
+                    <th>รวมทาย</th>
+                    <th>% ชนะ</th>
+                    <th>ทองคงเหลือ</th>
+                </tr>
+            </thead>
+            <tbody id="playerRecordsTableBody">
+                </tbody>
+        </table>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
